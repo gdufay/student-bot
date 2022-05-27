@@ -5,6 +5,10 @@ import logging # log for telegram
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, CallbackContext, filters
 
+from utils.levenshtein import calc_distance
+
+COMMANDS = ["/start", "/help", "/today", "/next", "/events"]
+
 START_MESSAGE = """
 Bonjour, je suis le bot personnel de la Sprint !
 Je vous tiendrais au courant des cours et des évenements de la journée.
@@ -49,7 +53,9 @@ async def events(update: Update, context: CallbackContext) -> None:
 # messages
 async def unknown(update: Update, context: CallbackContext) -> None:
     """Reply to all commands that were not recognized by the previous handlers"""
-    await update.message.reply_text("Désolé, je ne comprends pas cette commande.")
+    similar = calc_distance(update.edited_message.text, COMMANDS)
+    await context.bot.send_message(chat_id=update.effective_chat.id,
+            text=f"Désolé, je ne comprends pas cette commande.\n\nVous vouliez peut-être dire {similar} ?")
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Telegram Sprint Bot")
@@ -58,6 +64,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("token", help="Telegram token")
     parser.add_argument("--credential_file", default="credentials.json", help="Path to Google credentials file")
     parser.add_argument("--cookie_file", default="token.json", help="Path to Google token storage file")
+    parser.add_argument("--port", help="port from where calendar is listening")
 
     return parser.parse_args()
 

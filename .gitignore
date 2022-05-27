@@ -4,3 +4,4 @@ token.json
 venv
 
 *.sw*
+__pycache__
