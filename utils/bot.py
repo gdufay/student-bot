@@ -24,8 +24,9 @@ Les commandes suivantes sont disponibles:
 /events -> Indique les événements à venir
     """
 
-    def __init__(self, token):
+    def __init__(self, token, calendar):
         self.token = token
+        self.calendar = calendar
 
     # commands
     async def start(self, update: Update, context: CallbackContext) -> None:
