@@ -4,16 +4,17 @@ from telegram.ext import Application, CommandHandler, MessageHandler, CallbackCo
 
 from .levenshtein import calc_distance
 
-COMMANDS = ["/start", "/help", "/today", "/next", "/events"]
-
-START_MESSAGE = """
+class Bot:
+    COMMANDS = ["/start", "/help", "/today", "/next", "/events"]
+    
+    START_MESSAGE = """
 Bonjour, je suis le bot personnel de la Sprint !
 Je vous tiendrais au courant des cours et des évenements de la journée.
 
 Pour en savoir plus: /help.
-"""
-
-HELP_MESSAGE = """
+    """
+    
+    HELP_MESSAGE = """
 Les commandes suivantes sont disponibles:
 
 /start -> Message de bienvenue
@@ -21,48 +22,51 @@ Les commandes suivantes sont disponibles:
 /today -> Indique les cours d'aujourdhui
 /next -> Indique le prochain cours
 /events -> Indique les événements à venir
-"""
+    """
 
-# commands
-async def start(update: Update, context: CallbackContext) -> None:
-    """Function called at each /start command"""
-    await update.message.reply_text(START_MESSAGE)
+    def __init__(self, token):
+        self.token = token
 
-async def help_cmd(update: Update, context: CallbackContext) -> None:
-    """Helper function"""
-    await update.message.reply_text(HELP_MESSAGE)
-
-async def today(update: Update, context: CallbackContext) -> None:
-    """Get today classes from calendar"""
-    await update.message.reply_text("X_X Pas encore implémenté X_X")
-
-async def next_cmd(update: Update, context: CallbackContext) -> None:
-    """Get next classe from calendar"""
-    await update.message.reply_text("X_X Pas encore implémenté X_X")
-
-async def events(update: Update, context: CallbackContext) -> None:
-    """Get all incoming events from calendar"""
-    await update.message.reply_text("X_X Pas encore implémenté X_X")
-
-# messages
-async def unknown(update: Update, context: CallbackContext) -> None:
-    """Reply to all commands that were not recognized by the previous handlers"""
-    similar = calc_distance(update.effective_message.text, COMMANDS)
-    await context.bot.send_message(chat_id=update.effective_chat.id,
-            text=f"Désolé, je ne comprends pas cette commande.\n\nVous vouliez peut-être dire {similar} ?")
-
-def run_bot(token):
-    app = Application.builder().token(token).build()
-
-    # dispatch commands
-    app.add_handler(CommandHandler("start", start))
-    app.add_handler(CommandHandler("help", help_cmd))
-    app.add_handler(CommandHandler("today", today))
-    app.add_handler(CommandHandler("next", next_cmd))
-    app.add_handler(CommandHandler("events", events))
+    # commands
+    async def start(self, update: Update, context: CallbackContext) -> None:
+        """Function called at each /start command"""
+        await update.message.reply_text(Bot.START_MESSAGE)
     
-    # dispatch messages
-    app.add_handler(MessageHandler(filters.COMMAND, unknown))
+    async def help_cmd(self, update: Update, context: CallbackContext) -> None:
+        """Helper function"""
+        await update.message.reply_text(Bot.HELP_MESSAGE)
     
-    # run the bot until signal or Ctrl-C
-    app.run_polling()
+    async def today(self, update: Update, context: CallbackContext) -> None:
+        """Get today classes from calendar"""
+        await update.message.reply_text("X_X Pas encore implémenté X_X")
+    
+    async def next_cmd(self, update: Update, context: CallbackContext) -> None:
+        """Get next classe from calendar"""
+        await update.message.reply_text("X_X Pas encore implémenté X_X")
+    
+    async def events(self, update: Update, context: CallbackContext) -> None:
+        """Get all incoming events from calendar"""
+        await update.message.reply_text("X_X Pas encore implémenté X_X")
+    
+    # messages
+    async def unknown(self, update: Update, context: CallbackContext) -> None:
+        """Reply to all commands that were not recognized by the previous handlers"""
+        similar = calc_distance(update.effective_message.text, Bot.COMMANDS)
+        await context.bot.send_message(chat_id=update.effective_chat.id,
+                text=f"Désolé, je ne comprends pas cette commande.\n\nVous vouliez peut-être dire {similar} ?")
+    
+    def run_bot(self):
+        app = Application.builder().token(self.token).build()
+    
+        # dispatch commands
+        app.add_handler(CommandHandler("start", self.start))
+        app.add_handler(CommandHandler("help", self.help_cmd))
+        app.add_handler(CommandHandler("today", self.today))
+        app.add_handler(CommandHandler("next", self.next_cmd))
+        app.add_handler(CommandHandler("events", self.events))
+        
+        # dispatch messages
+        app.add_handler(MessageHandler(filters.COMMAND, self.unknown))
+        
+        # run the bot until signal or Ctrl-C
+        app.run_polling()

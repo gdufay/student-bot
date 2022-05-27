@@ -1,7 +1,7 @@
 import argparse # cli handler
 import logging # log for telegram
 
-from utils import bot
+from utils.bot import Bot
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
         level=logging.INFO)
@@ -25,7 +25,8 @@ def main() -> None:
     # TODO: catch InvalidToken error
     # TODO: catch other errors
     # launch the bot
-    bot.run_bot(args.token)
+    bot = Bot(args.token)
+    bot.run_bot()
 
     print("Bye !")
 
