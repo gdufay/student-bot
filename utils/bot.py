@@ -1,11 +1,8 @@
-import argparse # cli handler
-import logging # log for telegram
-
 # telegram related stuff
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, CallbackContext, filters
 
-from utils.levenshtein import calc_distance
+from .levenshtein import calc_distance
 
 COMMANDS = ["/start", "/help", "/today", "/next", "/events"]
 
@@ -25,9 +22,6 @@ Les commandes suivantes sont disponibles:
 /next -> Indique le prochain cours
 /events -> Indique les événements à venir
 """
-
-logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-        level=logging.INFO)
 
 # commands
 async def start(update: Update, context: CallbackContext) -> None:
@@ -53,29 +47,12 @@ async def events(update: Update, context: CallbackContext) -> None:
 # messages
 async def unknown(update: Update, context: CallbackContext) -> None:
     """Reply to all commands that were not recognized by the previous handlers"""
-    similar = calc_distance(update.edited_message.text, COMMANDS)
+    similar = calc_distance(update.effective_message.text, COMMANDS)
     await context.bot.send_message(chat_id=update.effective_chat.id,
             text=f"Désolé, je ne comprends pas cette commande.\n\nVous vouliez peut-être dire {similar} ?")
 
-def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Telegram Sprint Bot")
-
-    # add arguments to parser
-    parser.add_argument("token", help="Telegram token")
-    parser.add_argument("--credential_file", default="credentials.json", help="Path to Google credentials file")
-    parser.add_argument("--cookie_file", default="token.json", help="Path to Google token storage file")
-    parser.add_argument("--port", help="port from where calendar is listening")
-
-    return parser.parse_args()
-
-def main() -> None:
-    """Run the bot."""
-    # get cli arguments
-    args = parse_args()
-
-    # TODO: catch InvalidToken error
-    # TODO: catch other errors
-    app = Application.builder().token(args.token).build()
+def run_bot(token):
+    app = Application.builder().token(token).build()
 
     # dispatch commands
     app.add_handler(CommandHandler("start", start))
@@ -89,8 +66,3 @@ def main() -> None:
     
     # run the bot until signal or Ctrl-C
     app.run_polling()
-
-    print("Bye !")
-
-if __name__ == "__main__":
-    main()
