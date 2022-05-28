@@ -14,7 +14,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("token", help="Telegram token")
     parser.add_argument("--credential_file", default="credentials.json", help="Path to Google credentials file")
     parser.add_argument("--cookie_file", default="token.json", help="Path to Google token storage file")
-    parser.add_argument("--port", help="port from where calendar is listening")
+    parser.add_argument("--port", help="port from where calendar is listening", type=int)
 
     return parser.parse_args()
 
@@ -23,7 +23,8 @@ def main() -> None:
     # get cli arguments
     args = parse_args()
 
-    calendar = Calendar(credentials_path=args.credential_file, token_path=args.cookie_file)
+    calendar = Calendar(credentials_path=args.credential_file, token_path=args.cookie_file, port=args.port)
+    calendar.build()
 
     # TODO: catch InvalidToken error
     # TODO: catch other errors

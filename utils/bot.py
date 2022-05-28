@@ -39,7 +39,13 @@ Les commandes suivantes sont disponibles:
     
     async def today(self, update: Update, context: CallbackContext) -> None:
         """Get today classes from calendar"""
-        await update.message.reply_text("X_X Pas encore implémenté X_X")
+        events = self.calendar.get_today_events()
+
+        if not events:
+            text = "Pas de cours aujourd'hui"
+        else:
+            text = "Les cours sont :\n\n" + "\n".join(map(str, events))
+        await update.message.reply_text(text)
     
     async def next_cmd(self, update: Update, context: CallbackContext) -> None:
         """Get next classe from calendar"""
