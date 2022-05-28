@@ -84,41 +84,30 @@ class Calendar:
             print('An error occurred: %s' % error)
             return []
 
-    def get_next_events(self):
+    def get_next_event(self):
         """Return the next incoming event"""
-        pass
+        try:
+            now = datetime.now(pytz.timezone(self.tz)).isoformat()
+
+            print(f"Getting next event at {now}")
+            events_result = self.service.events().list(calendarId='primary', timeMin=now,
+                                                  maxResults=1, singleEvents=True, timeZone=self.tz,
+                                                  orderBy='startTime').execute()
+            event = events_result["items"]
+
+            if not event:
+                print("No upcoming event")
+                return None
+
+            print("Found next event !")
+
+            return Course.from_calendar_event(event[0])
+
+        except HttpError as error:
+            print('An error occurred: %s' % error)
+            return None
+
 
     def get_incoming_tasks(self, period=7):
         """Return all incoming tasks in the given period (in days)"""
         pass
-
-
-#    try:
-#        # Call the Calendar API
-#        # now = datetime.datetime.utcnow().isoformat() + 'Z'  # 'Z' indicates UTC time
-#        # print('Getting the upcoming 10 events')
-#        # events_result = service.events().list(calendarId='primary', timeMin=now,
-#        #                                       maxResults=10, singleEvents=True,
-#        #                                       orderBy='startTime').execute()
-#        # events = events_result.get('items', [])
-#
-#        # if not events:
-#        #     print('No upcoming events found.')
-#        #     return
-#
-#        # # Prints the start and name of the next 10 events
-#        # for event in events:
-#        #     start = event['start'].get('dateTime', event['start'].get('date'))
-#        #     print(start, event['summary'])
-#        calendars_result = service.calendarList().list().execute()
-#        calendars = calendars_result.get('items', [])
-#
-#        if not calendars:
-#            print("No calendars")
-#            return
-#
-#        for calendar in calendars:
-#            print(f"{calendar['summary']}, primary : {calendar.get('primary', False)}")
-#
-#    except HttpError as error:
-#        print('An error occurred: %s' % error)

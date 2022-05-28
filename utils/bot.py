@@ -49,7 +49,13 @@ Les commandes suivantes sont disponibles:
     
     async def next_cmd(self, update: Update, context: CallbackContext) -> None:
         """Get next classe from calendar"""
-        await update.message.reply_text("X_X Pas encore implémenté X_X")
+        event = self.calendar.get_next_event()
+
+        if not event:
+            text = "Pas de prochain cours"
+        else:
+            text = "Le prochain cours est :\n\n" + str(event)
+        await update.message.reply_text(text)
     
     async def events(self, update: Update, context: CallbackContext) -> None:
         """Get all incoming events from calendar"""
