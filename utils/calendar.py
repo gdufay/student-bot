@@ -12,19 +12,24 @@ from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
 from .course import Course
+from .task import Task
 
 class Calendar:
     """Wrapper class around google calendar"""
 
     # If modifying these scopes, delete the file token.json.
-    SCOPES = ['https://www.googleapis.com/auth/calendar.readonly']
+    SCOPES = [
+        'https://www.googleapis.com/auth/calendar.readonly',
+        'https://www.googleapis.com/auth/tasks.readonly'
+        ]
 
     def __init__(self, credentials_path="credentials.json", token_path="token.json", port=0, tz="Europe/Paris"):
         self.credentials_path = credentials_path
         self.token_path = token_path
         self.port = port
         self.creds = None
-        self.service = None
+        self.calendar_service = None
+        self.tasks_service = None
         self.tz = tz
 
     def connect(self) -> None:
@@ -50,13 +55,14 @@ class Calendar:
                 token.write(self.creds.to_json())
 
     def build(self) -> None:
-        """Build the calendar service"""
+        """Build all the required services"""
         if not self.creds:
             print("Not connected. Connecting...")
             self.connect()
 
         try:
-            self.service = build('calendar', 'v3', credentials=self.creds)
+            self.calendar_service = build('calendar', 'v3', credentials=self.creds)
+            self.tasks_service = build('tasks', 'v1', credentials=self.creds)
         except HttpError as error:
             print('An error occurred: %s' % error)
 
@@ -68,7 +74,7 @@ class Calendar:
             time_max = time_min + timedelta(hours=23, minutes=59, seconds=59)
 
             print(f"Getting events between {time_min} and {time_max}")
-            events_result = self.service.events().list(calendarId='primary', timeMin=time_min.isoformat(),
+            events_result = self.calendar_service.events().list(calendarId='primary', timeMin=time_min.isoformat(),
                                                   timeMax=time_max.isoformat(), singleEvents=True, timeZone=self.tz,
                                                   orderBy='startTime').execute()
             events = events_result.get('items', [])
@@ -90,7 +96,7 @@ class Calendar:
             now = datetime.now(pytz.timezone(self.tz)).isoformat()
 
             print(f"Getting next event at {now}")
-            events_result = self.service.events().list(calendarId='primary', timeMin=now,
+            events_result = self.calendar_service.events().list(calendarId='primary', timeMin=now,
                                                   maxResults=1, singleEvents=True, timeZone=self.tz,
                                                   orderBy='startTime').execute()
             event = events_result["items"]
@@ -107,7 +113,32 @@ class Calendar:
             print('An error occurred: %s' % error)
             return None
 
-
+    # TODO: type annotation
     def get_incoming_tasks(self, period=7):
         """Return all incoming tasks in the given period (in days)"""
-        pass
+        try:
+            time_min = datetime.now(pytz.timezone(pytz.utc.zone)).replace(hour=0, minute=0, second=0, microsecond=0)
+            time_max = time_min + timedelta(days=period)
+
+            print("Getting tasks lists")
+            tasklists_result = self.tasks_service.tasklists().list().execute()
+            tasklists = tasklists_result.get("items", [])
+
+            if not tasklists:
+                print("No upcoming tasks")
+                return []
+
+            print(f"Found {len(tasklists)} tasklists !")
+            print(f"Searching for tasks in these lists between {time_min} and {time_max}")
+            ret = []
+            for tasklist in tasklists:
+                tasks_result = self.tasks_service.tasks().list(tasklist=tasklist["id"], dueMin=time_min.isoformat(), dueMax=time_max.isoformat()).execute()
+                tasks = tasks_result.get("items", [])
+
+                ret += [Task.from_tasks_api(task) for task in tasks]
+
+            return ret
+
+        except HttpError as error:
+            print('An error occurred: %s' % error)
+            return []
