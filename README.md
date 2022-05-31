@@ -41,11 +41,16 @@ A telegram bot to help students share informations.
    ```sh
    git clone https://github.com/gdufay/student-bot.git
    ```
-3. Install python dependencies
+3. Create a virtualenv
+  ```sh
+  python3 -m venv venv
+  source venv/bin/activate
+  ```
+4. Install python dependencies
   ```sh
   pip install -r requirements.txt
   ```
-4. Export your telegram token
+5. Export your telegram token
   ```sh
   export BOT_TOKEN="yourtoken"
   ```
@@ -55,8 +60,15 @@ A telegram bot to help students share informations.
 To launch the bot :
 
 ```sh
-python bot.py
+python3 main.py
 ```
+
+### Options
+
+- -h, --help show this help message and exit
+- --credential\_file CREDENTIAL\_FILE Path to Google credentials file
+- --cookie\_file COOKIE\_FILE Path to Google token storage file
+- --port PORT port from where calendar is listening 
 
 ### Commands and capacity
 
