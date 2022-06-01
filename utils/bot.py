@@ -5,7 +5,9 @@ import pytz
 from telegram import Update
 from telegram.ext import (Application, CommandHandler,
                           MessageHandler, CallbackContext, filters)
-import logging  # log for telegram
+import logging
+
+from utils.calendar import Calendar
 
 from .levenshtein import calc_distance
 
@@ -40,9 +42,9 @@ Les commandes suivantes sont disponibles:
 /reminder <set|unset> -> Configure le rappel des tâches
 """
 
-    def __init__(self, token: str, calendar):
+    def __init__(self, token: str):
         self.token = token
-        self.calendar = calendar
+        self.calendar = Calendar()
 
         logging.basicConfig(
             format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -58,47 +60,23 @@ Les commandes suivantes sont disponibles:
         """Helper function"""
         await update.effective_message.reply_text(Bot.HELP_MESSAGE)
 
-    def get_today_msg(self) -> str:
-        events = self.calendar.get_today_events()
-
-        if not events:
-            text = "Pas de cours aujourd'hui"
-        else:
-            text = "Les cours sont :\n\n" + "\n".join(map(str, events))
-
-        return text
-
     async def today(self, update: Update, _: CallbackContext) -> None:
         """Get today classes from calendar"""
-        text = self.get_today_msg()
+        text = self.calendar.get_today_classes()
 
         await update.effective_message.reply_text(text)
 
     async def next_cmd(self, update: Update, _: CallbackContext) -> None:
         """Get next classe from calendar"""
-        event = self.calendar.get_next_event()
+        text = self.calendar.get_next_class()
 
-        if not event:
-            text = "Pas de prochain cours"
-        else:
-            text = "Le prochain cours est :\n\n" + str(event)
         await update.effective_message.reply_text(text)
-
-    def get_tasks_msg(self, period: int) -> str:
-        tasks = self.calendar.get_incoming_tasks(period)
-
-        if not tasks:
-            text = "Pas de tâches à venir"
-        else:
-            text = "Les tâches à venir sont :\n\n" + \
-                "\n".join(map(str, tasks))
-        return text
 
     async def tasks(self, update: Update, context: CallbackContext) -> None:
         """Get all incoming tasks from calendar in a given period"""
         try:
             period = int(context.args[0])
-            text = self.get_tasks_msg(period)
+            text = self.calendar.get_incoming_tasks(period)
 
             await update.effective_message.reply_text(text)
         except (IndexError, ValueError):
@@ -107,21 +85,24 @@ Les commandes suivantes sont disponibles:
     def remove_job_if_exists(self, name: str, context: CallbackContext) -> bool:
         """Remove job with given name. Returns whether job was removed."""
         current_jobs = context.job_queue.get_jobs_by_name(name)
+
         if not current_jobs:
             return False
+
         for job in current_jobs:
             job.schedule_removal()
+
         return True
 
     async def callback_today(self, context: CallbackContext) -> None:
         """Send the daily reminder"""
-        text = self.get_today_msg()
+        text = self.calendar.get_today_classes()
 
         await context.bot.send_message(context.job.chat_id, text=text)
 
     async def callback_tasks(self, context: CallbackContext) -> None:
         """Send the daily reminder"""
-        text = self.get_tasks_msg(7)
+        text = self.calendar.get_incoming_tasks(period=7)
 
         await context.bot.send_message(context.job.chat_id, text=text)
 
@@ -170,12 +151,15 @@ Les commandes suivantes sont disponibles:
             await update.effective_message.reply_text(text)
 
         except (IndexError, ValueError):
-            await update.effective_message.reply_text("Usage: /reminder <set|unset>")
+            await update.effective_message.reply_text(
+                "Usage: /reminder <set|unset>"
+            )
 
     # messages
     async def unknown(self, update: Update, context: CallbackContext) -> None:
         """Reply to all commands that were not recognized"""
         similar = calc_distance(update.effective_message.text, Bot.COMMANDS)
+
         await context.bot.send_message(
             chat_id=update.effective_chat.id,
             text=("Désolé, je ne comprends pas cette commande.\n\n"

@@ -1,164 +1,72 @@
-from __future__ import print_function
-
-from datetime import datetime, timedelta
-import pytz
-import os.path
-
-from google.auth.transport.requests import Request
-from google.oauth2.credentials import Credentials
-# from google.oauth2 import service_account
-from google_auth_oauthlib.flow import InstalledAppFlow
-from googleapiclient.discovery import build
-from googleapiclient.errors import HttpError
-
-from .course import Course
-from .task import Task
+from .service import CalendarService, TasksService
 
 
 class Calendar:
-    """Wrapper class around google calendar"""
+    """Utility class linking different service to create a calendar"""
 
-    # If modifying these scopes, delete the file token.json.
-    SCOPES = [
-        'https://www.googleapis.com/auth/calendar.readonly',
-        'https://www.googleapis.com/auth/tasks.readonly'
-    ]
-
-    def __init__(self, credentials_path="credentials.json",
-                 token_path="token.json", port=0, tz="Europe/Paris"):
-        self.credentials_path = credentials_path
-        self.token_path = token_path
-        self.port = port
-        self.creds = None
-        self.calendar_service = None
-        self.tasks_service = None
-        self.tz = tz
+    def __init__(self):
+        self.calendar_service = CalendarService()
+        self.tasks_service = TasksService()
 
     def connect(self) -> None:
         """Connect to calendar server"""
-        # self.creds = service_account.Credentials.from_service_account_file(
-        #   self.credentials_path, scopes=Calendar.SCOPES
-        # )
-        # self.creds = credentials.with_subject('dufaygaetan.gd@gmail.com')
-
         # The file token.json stores the user's access and refresh tokens,
         # and is created automatically when the authorization flow completes
         # for the first time.
-        if os.path.exists(self.token_path):
-            self.creds = Credentials.from_authorized_user_file(
-                self.token_path, Calendar.SCOPES
-            )
-        # If there are no (valid) credentials available, let the user log in.
-        if not self.creds or not self.creds.valid:
-            if self.creds and self.creds.expired and self.creds.refresh_token:
-                self.creds.refresh(Request())
-            else:
-                flow = InstalledAppFlow.from_client_secrets_file(
-                    self.credentials_path, Calendar.SCOPES
-                )
-                self.creds = flow.run_local_server(port=self.port)
-            # Save the credentials for the next run
-            with open(self.token_path, 'w') as token:
-                token.write(self.creds.to_json())
+        # if os.path.exists(self.token_path):
+        #     self.creds = Credentials.from_authorized_user_file(
+        #         self.token_path, Calendar.SCOPES
+        #     )
+        # # If there are no (valid) credentials available, let the user log in.
+        # if not self.creds or not self.creds.valid:
+        #     if self.creds and self.creds.expired and self.creds.refresh_token:
+        #         self.creds.refresh(Request())
+        #     else:
+        #         flow = InstalledAppFlow.from_client_secrets_file(
+        #             self.credentials_path, Calendar.SCOPES
+        #         )
+        #         self.creds = flow.run_local_server(port=self.port)
+        #     # Save the credentials for the next run
+        #     with open(self.token_path, 'w') as token:
+        #         token.write(self.creds.to_json())
+        pass
 
-    def build(self) -> None:
+    def build(self, credentials) -> None:
         """Build all the required services"""
-        if not self.creds:
-            print("Not connected. Connecting...")
-            self.connect()
+        # scopes = [*CalendarService.SCOPES, *TasksService.SCOPES]
 
-        try:
-            self.calendar_service = build(
-                'calendar', 'v3', credentials=self.creds
-            )
-            self.tasks_service = build('tasks', 'v1', credentials=self.creds)
-        except HttpError as error:
-            print('An error occurred: %s' % error)
+        self.calendar_service.build(credentials)
+        self.tasks_service.build(credentials)
 
-    # TODO: type annotation
-    def get_today_events(self):
+    def get_today_classes(self) -> str:
         """Return all events occuring today"""
-        try:
-            time_min = datetime.now(pytz.timezone(self.tz)).replace(
-                hour=0, minute=0, second=0, microsecond=0)
-            time_max = time_min + timedelta(hours=23, minutes=59, seconds=59)
+        classes = self.calendar_service.get_today_classes()
 
-            print(f"Getting events between {time_min} and {time_max}")
-            events_result = self.calendar_service.events().list(
-                calendarId='primary', timeMin=time_min.isoformat(),
-                timeMax=time_max.isoformat(), singleEvents=True,
-                timeZone=self.tz, orderBy='startTime'
-            ).execute()
-            events = events_result.get('items', [])
+        if not classes:
+            text = "Pas de cours aujourd'hui"
+        else:
+            text = "Les cours sont :\n\n" + "\n".join(map(str, classes))
 
-            if not events:
-                print('No upcoming events found.')
-            else:
-                print(f"Found {len(events)} events !")
+        return text
 
-            return list(
-                map(lambda event: Course.from_calendar_event(event), events)
-            )
-
-        except HttpError as error:
-            print('An error occurred: %s' % error)
-            return []
-
-    def get_next_event(self):
+    def get_next_class(self) -> str:
         """Return the next incoming event"""
-        try:
-            now = datetime.now(pytz.timezone(self.tz)).isoformat()
+        course = self.calendar_service.get_next_class()
 
-            print(f"Getting next event at {now}")
-            events_result = self.calendar_service.events().list(
-                calendarId='primary', timeMin=now,
-                maxResults=1, singleEvents=True, timeZone=self.tz,
-                orderBy='startTime'
-            ).execute()
-            event = events_result["items"]
+        if not course:
+            text = "Pas de prochain cours"
+        else:
+            text = "Le prochain cours est :\n\n" + str(course)
 
-            if not event:
-                print("No upcoming event")
-                return None
+        return text
 
-            print("Found next event !")
-
-            return Course.from_calendar_event(event[0])
-
-        except HttpError as error:
-            print('An error occurred: %s' % error)
-            return None
-
-    # TODO: type annotation
-    def get_incoming_tasks(self, period=7):
+    def get_incoming_tasks(self, period: int) -> str:
         """Return all incoming tasks in the given period (in days)"""
-        try:
-            time_min = datetime.now(pytz.timezone(pytz.utc.zone)).replace(
-                hour=0, minute=0, second=0, microsecond=0)
-            time_max = time_min + timedelta(days=period)
+        tasks = self.tasks_service.get_incoming_tasks(period)
 
-            print("Getting tasks lists")
-            tasklists_result = self.tasks_service.tasklists().list().execute()
-            tasklists = tasklists_result.get("items", [])
+        if not tasks:
+            text = "Pas de tâches à venir"
+        else:
+            text = "Les tâches à venir sont :\n\n" + "\n".join(map(str, tasks))
 
-            if not tasklists:
-                print("No upcoming tasks")
-                return []
-
-            print(f"Found {len(tasklists)} tasklists !")
-            print(f"Searching between {time_min} and {time_max}")
-            ret = []
-            for tasklist in tasklists:
-                tasks_result = self.tasks_service.tasks().list(
-                    tasklist=tasklist["id"], dueMin=time_min.isoformat(),
-                    dueMax=time_max.isoformat()
-                ).execute()
-                tasks = tasks_result.get("items", [])
-
-                ret += [Task.from_tasks_api(task) for task in tasks]
-
-            return ret
-
-        except HttpError as error:
-            print('An error occurred: %s' % error)
-            return []
+        return text
