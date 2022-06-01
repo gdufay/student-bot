@@ -13,7 +13,13 @@ A telegram bot to help students share informations.
         <li><a href="#installation">Installation</a></li>
       </ul>
     </li>
-    <li><a href="#usage">Usage</a></li>
+    <li>
+      <a href="#usage">Usage</a>
+      <ul>
+        <li><a href="#options">Prerequisites</a></li>
+        <li><a href="#commands">Installation</a></li>
+      </ul>
+    </li>
     <li><a href="#roadmap">Roadmap</a></li>
     <li><a href="#contributing">Contributing</a></li>
     <li><a href="#license">License</a></li>
@@ -70,20 +76,21 @@ python3 main.py
 - --cookie\_file COOKIE\_FILE Path to Google token storage file
 - --port PORT port from where calendar is listening 
 
-### Commands and capacity
+### Commands
 
 - **/start** Display the start message
 - **/help** Display the helper
 - **/today** Show classes occuring today
 - **/next** Show next classe
 - **/events <period>** Show the events in the incoming period
+- **/reminder <set|unset>** Configure classe and task reminders
 
 ## Roadmap
 
 - [ ] basic commands and launch
+- [X] reminder
 - [ ] possibility to change language
 - [ ] handle multiple calendars
-- [ ] jobqueue
 
 ## Contributing
 
