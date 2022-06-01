@@ -76,14 +76,14 @@ python3 main.py
 - **/help** Display the helper
 - **/today** Show classes occuring today
 - **/next** Show next classe
-- **/events period** Show the events in the incoming period
+- **/events <period>** Show the events in the incoming period
 
 ## Roadmap
 
 - [ ] basic commands and launch
 - [ ] possibility to change language
 - [ ] handle multiple calendars
-- [ ] more
+- [ ] jobqueue
 
 ## Contributing
 

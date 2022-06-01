@@ -5,3 +5,4 @@ venv
 
 *.sw*
 __pycache__
+.vscode
