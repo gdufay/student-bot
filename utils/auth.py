@@ -1,6 +1,7 @@
 import os
 import flask
 import requests
+import threading
 
 import google.oauth2.credentials
 import google_auth_oauthlib.flow
@@ -24,16 +25,20 @@ def credentials_to_dict(credentials):
             'scopes': credentials.scopes}
 
 
+class FlaskThread(threading.Thread):
+    def __init__(self, host: str = "localhost", port: int = 1234) -> None:
+        super().__init__()
+        self.app = None
+        self.host = host
+        self.port = port
+
+    def run(self) -> None:
+        self.app.run(self.host, port=self.port)
+
+
 def create_app(bot: Bot, secret_file: str = "credentials.json"):
     app = flask.Flask(__name__)
     app.secret_key = 'iUZ14ULwgRya5cMjf2zQVZqGhXv0qULNvCSXFWvrTNA='
-
-    #    # Load credentials from the session.
-    #    credentials = google.oauth2.credentials.Credentials(
-    #        **flask.session['credentials'])
-
-    #    # Save credentials back to session in case access token was refreshed.
-    #    flask.session['credentials'] = credentials_to_dict(credentials)
 
     @app.route('/authorize')
     def authorize():
@@ -73,7 +78,12 @@ def create_app(bot: Bot, secret_file: str = "credentials.json"):
         credentials = flow.credentials
         flask.session['credentials'] = credentials_to_dict(credentials)
 
-        return flask.redirect(flask.url_for('test_api_request'))
+        bot.connect_service(credentials)
+
+        # Save credentials back to session in case access token was refreshed.
+        flask.session['credentials'] = credentials_to_dict(credentials)
+
+        return "Succesfully logged !"
 
     @app.route('/revoke')
     def revoke():
@@ -94,6 +104,7 @@ def create_app(bot: Bot, secret_file: str = "credentials.json"):
 
         status_code = getattr(revoke, 'status_code')
         if status_code == 200:
+            bot.disconnect_service()
             return 'Credentials successfully revoked.'
         else:
             return 'An error occurred.'
@@ -102,6 +113,8 @@ def create_app(bot: Bot, secret_file: str = "credentials.json"):
     def clear_credentials():
         if 'credentials' in flask.session:
             del flask.session['credentials']
+
+        bot.disconnect_service()
         return 'Credentials have been cleared.<br><br>'
 
     # TODO: remove

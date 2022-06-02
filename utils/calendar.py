@@ -13,6 +13,11 @@ class Calendar:
         self.calendar_service.build(credentials)
         self.tasks_service.build(credentials)
 
+    def unbuild(self) -> None:
+        """Unbuild all the services"""
+        self.calendar_service.unbuild()
+        self.tasks_service.unbuild()
+
     def get_today_classes(self) -> str:
         """Return all events occuring today"""
         try:

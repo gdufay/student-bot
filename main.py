@@ -1,7 +1,7 @@
 import os  # get environment variable
 import sys  # exit when error
 import argparse
-from utils.auth import create_app  # cli handler
+from utils.auth import FlaskThread, create_app  # cli handler
 
 from utils.bot import Bot
 
@@ -35,10 +35,12 @@ def main() -> None:
     # TODO: catch other errors
     # launch the bot
     bot = Bot(token, timezone=args.tz)
-    bot.run_bot()
 
-    app = create_app(bot, args.secret_file)
-    app.run('localhost', args.port, debug=True)
+    flask_thread = FlaskThread(port=args.port)
+    flask_thread.app = create_app(bot, args.secret_file)
+    flask_thread.start()
+
+    bot.run_bot()
 
     print("Bye !")
 

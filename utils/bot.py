@@ -54,6 +54,12 @@ Les commandes suivantes sont disponibles:
             level=logging.INFO
         )
 
+    def connect_service(self, credentials) -> None:
+        self.calendar.build(credentials)
+
+    def disconnect_service(self) -> None:
+        self.calendar.unbuild()
+
     # commands
     async def start(self, update: Update, _: CallbackContext) -> None:
         """Function called at each /start command"""
@@ -66,12 +72,12 @@ Les commandes suivantes sont disponibles:
     async def connect(self, update: Update, _: CallbackContext) -> None:
         """Connect to google account"""
         await update.effective_message.reply_text(
-            "Connectez-vous: https://bot.oh-my-g.fr/authorize")
+            "Connectez-vous: http://localhost:1234/authorize")
 
     async def disconnect(self, update: Update, _: CallbackContext) -> None:
         """Disconnect from google account"""
         await update.effective_message.reply_text(
-            "Pour vous déconnecter: https://bot.oh-my-g.fr/revoke")
+            "Pour vous déconnecter: http://localhost:1234/clear")
 
     async def today(self, update: Update, _: CallbackContext) -> None:
         """Get today classes from calendar"""

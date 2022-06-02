@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 import pytz
 
 from googleapiclient.errors import HttpError
+from google.auth.exceptions import RefreshError
 from googleapiclient.discovery import build
 
 from utils.course import Course
@@ -26,6 +27,9 @@ class GoogleService:
                                  self.API_VERSION, credentials=credentials)
         except HttpError as error:
             print('An error occurred: %s' % error)
+
+    def unbuild(self):
+        self.service = None
 
 
 class CalendarService(GoogleService):
@@ -61,6 +65,9 @@ class CalendarService(GoogleService):
         except HttpError as error:
             print('An error occurred: %s' % error)
             return []
+        except RefreshError:
+            print("Problem with the token")
+            raise AttributeError
 
     def get_next_class(self) -> Course:
         """Return the next incoming event"""
@@ -85,6 +92,9 @@ class CalendarService(GoogleService):
         except HttpError as error:
             print('An error occurred: %s' % error)
             return None
+        except RefreshError:
+            print("Problem with the token")
+            raise AttributeError
 
 
 class TasksService(GoogleService):
@@ -114,7 +124,7 @@ class TasksService(GoogleService):
             print(f"Searching between {time_min} and {time_max}")
             ret = []
             for tasklist in tasklists:
-                tasks_result = self.tasks_service.tasks().list(
+                tasks_result = self.service.tasks().list(
                     tasklist=tasklist["id"], dueMin=time_min.isoformat(),
                     dueMax=time_max.isoformat()
                 ).execute()
@@ -127,3 +137,6 @@ class TasksService(GoogleService):
         except HttpError as error:
             print('An error occurred: %s' % error)
             return []
+        except RefreshError:
+            print("Problem with the token")
+            raise AttributeError
