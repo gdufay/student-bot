@@ -42,9 +42,9 @@ Les commandes suivantes sont disponibles:
 /reminder <set|unset> -> Configure le rappel des tâches
 """
 
-    def __init__(self, token: str):
+    def __init__(self, token: str, timezone: str):
         self.token = token
-        self.calendar = Calendar()
+        self.calendar = Calendar(timezone=timezone)
 
         logging.basicConfig(
             format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -82,7 +82,7 @@ Les commandes suivantes sont disponibles:
         except (IndexError, ValueError):
             await update.effective_message.reply_text("Usage: /tasks <period>")
 
-    def remove_job_if_exists(self, name: str, context: CallbackContext) -> bool:
+    def rm_job_if_exists(self, name: str, context: CallbackContext) -> bool:
         """Remove job with given name. Returns whether job was removed."""
         current_jobs = context.job_queue.get_jobs_by_name(name)
 
@@ -110,7 +110,7 @@ Les commandes suivantes sont disponibles:
         """Set the reminders"""
         text = "Les rappels des cours et des tâches ont bien été configuré."
 
-        if self.remove_job_if_exists(str(chat_id), context):
+        if self.rm_job_if_exists(str(chat_id), context):
             text = "Les anciens rappels ont été supprimé.\n" + text
 
         # set classes reminder
@@ -128,7 +128,7 @@ Les commandes suivantes sont disponibles:
 
     def unset_reminder(self, context: CallbackContext, chat_id: int) -> str:
         """Unset the reminders"""
-        if self.remove_job_if_exists(str(chat_id), context):
+        if self.rm_job_if_exists(str(chat_id), context):
             text = "Les rappels ont bien été supprimé."
         else:
             text = "Il n'y a pas de rappel actif."
