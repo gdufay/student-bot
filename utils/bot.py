@@ -45,9 +45,10 @@ Les commandes suivantes sont disponibles:
 /reminder <set|unset> -> Configure le rappel des tâches
 """
 
-    def __init__(self, token: str, timezone: str):
+    def __init__(self, token: str, timezone: str, auth_url: str):
         self.token = token
         self.calendar = Calendar(timezone=timezone)
+        self.auth_url = auth_url
 
         logging.basicConfig(
             format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -72,12 +73,12 @@ Les commandes suivantes sont disponibles:
     async def connect(self, update: Update, _: CallbackContext) -> None:
         """Connect to google account"""
         await update.effective_message.reply_text(
-            "Connectez-vous: http://localhost:1234/authorize")
+            f"Connectez-vous: {self.auth_url}/authorize")
 
     async def disconnect(self, update: Update, _: CallbackContext) -> None:
         """Disconnect from google account"""
         await update.effective_message.reply_text(
-            "Pour vous déconnecter: http://localhost:1234/clear")
+            f"Pour vous déconnecter: {self.auth_url}/clear")
 
     async def today(self, update: Update, _: CallbackContext) -> None:
         """Get today classes from calendar"""

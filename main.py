@@ -16,6 +16,7 @@ def parse_args() -> argparse.Namespace:
         "--port", help="port from where flask server is listening", type=int)
     parser.add_argument("--tz", help="Timezone of the bot",
                         default="Europe/Paris")
+    parser.add_argument("--auth_url", help="URL to google authentification")
 
     return parser.parse_args()
 
@@ -34,10 +35,11 @@ def main() -> None:
     # TODO: catch InvalidToken error
     # TODO: catch other errors
     # launch the bot
-    bot = Bot(token, timezone=args.tz)
+    bot = Bot(token, timezone=args.tz, auth_url=args.auth_url)
 
     flask_thread = FlaskThread(port=args.port)
     flask_thread.app = create_app(bot, args.secret_file)
+    flask_thread.setDaemon(True)
     flask_thread.start()
 
     bot.run_bot()
