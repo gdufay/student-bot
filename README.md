@@ -32,9 +32,6 @@ A telegram bot to help students share informations.
 
 ### Prerequisites
 
-<!-- - a telegram bot token -->
-<!-- - to get the next classes and events, a google account with a primary calendar should be linked -->
-
 * pip
   ```sh
   sudo apt install python3-pip
@@ -66,20 +63,22 @@ A telegram bot to help students share informations.
 To launch the bot :
 
 ```sh
-python3 main.py
+python3 main.py --port 1234
 ```
 
 ### Options
 
 - -h, --help show this help message and exit
-- --credential\_file CREDENTIAL\_FILE Path to Google credentials file
-- --cookie\_file COOKIE\_FILE Path to Google token storage file
-- --port PORT port from where calendar is listening 
+- --secret\_file CREDENTIAL\_FILE Path to Google credentials file. Default is *credentials.json*
+- --port PORT port from where flask is listening 
+- --tz Timezone of the bot. Default is *Europe/Paris*
 
 ### Commands
 
 - **/start** Display the start message
 - **/help** Display the helper
+- **/connect** -> Connect to google account
+- **/disconnect** -> Disconnect google account
 - **/today** Show classes occuring today
 - **/next** Show next classe
 - **/events <period>** Show the events in the incoming period
@@ -87,7 +86,7 @@ python3 main.py
 
 ## Roadmap
 
-- [ ] basic commands and launch
+- [X] basic commands and launch
 - [X] reminder
 - [ ] possibility to change language
 - [ ] handle multiple calendars
