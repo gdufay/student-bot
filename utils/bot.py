@@ -18,7 +18,8 @@ class Bot:
     )
 
     # commands handled by the bot
-    COMMANDS = ["/start", "/help", "/today", "/next", "/tasks", "/reminder"]
+    COMMANDS = ["/start", "/help", "/today", "/next", "/tasks", "/reminder",
+                "/connect", "/disconnect"]
 
     # message sent by the bot at start
     START_MESSAGE = """
@@ -34,6 +35,8 @@ Les commandes suivantes sont disponibles:
 
 /start -> Message de bienvenue
 /help -> Affiche l'aide
+/connect -> Connection au compte google
+/disconnect -> Déconnecte du compte google
 /today -> Indique les cours d'aujourdhui
 /next -> Indique le prochain cours
 /tasks <period> -> Indique les tâches à venir dans la période donnée
@@ -57,6 +60,14 @@ Les commandes suivantes sont disponibles:
     async def help_cmd(self, update: Update, _: CallbackContext) -> None:
         """Helper function"""
         await update.effective_message.reply_text(Bot.HELP_MESSAGE)
+
+    async def connect(self, update: Update, _: CallbackContext) -> None:
+        """Connect to google account"""
+        await update.effective_message.reply_text("Connectez-vous: https://bot.oh-my-g.fr/authorize")
+
+    async def disconnect(self, update: Update, _: CallbackContext) -> None:
+        """Disconnect from google account"""
+        await update.effective_message.reply_text("Pour vous déconnecter: https://bot.oh-my-g.fr/revoke")
 
     def get_today_msg(self) -> str:
         events = self.calendar.get_today_events()
@@ -192,6 +203,8 @@ Les commandes suivantes sont disponibles:
         app.add_handler(CommandHandler("next", self.next_cmd))
         app.add_handler(CommandHandler("tasks", self.tasks))
         app.add_handler(CommandHandler("reminder", self.reminder))
+        app.add_handler(CommandHandler("connect", self.connect))
+        app.add_handler(CommandHandler("disconnect", self.disconnect))
 
         # dispatch messages
         app.add_handler(MessageHandler(filters.COMMAND, self.unknown))
