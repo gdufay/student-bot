@@ -4,7 +4,6 @@ import argparse
 from utils.auth import create_app  # cli handler
 
 from utils.bot import Bot
-from utils.calendar import Calendar
 
 
 def parse_args() -> argparse.Namespace:
@@ -15,6 +14,8 @@ def parse_args() -> argparse.Namespace:
                         help="Path to Google credentials file")
     parser.add_argument(
         "--port", help="port from where flask server is listening", type=int)
+    parser.add_argument("--tz", help="Timezone of the bot",
+                        default="Europe/Paris")
 
     return parser.parse_args()
 
@@ -30,14 +31,10 @@ def main() -> None:
     # get cli arguments
     args = parse_args()
 
-    calendar = Calendar(credentials_path=args.credential_file,
-                        token_path=args.cookie_file, port=args.port)
-    calendar.build()
-
     # TODO: catch InvalidToken error
     # TODO: catch other errors
     # launch the bot
-    bot = Bot(token, calendar)
+    bot = Bot(token, timezone=args.tz)
     bot.run_bot()
 
     app = create_app(bot, args.secret_file)
